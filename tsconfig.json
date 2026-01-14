@@ -1,0 +1,49 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "lib": [
+            "ES2022"
+        ],
+        "moduleResolution": "bundler",
+        "rootDir": ".",
+        "baseUrl": ".",
+        "paths": {
+            "@mcp-intent/cli": [
+                "./packages/cli/src"
+            ],
+            "@mcp-intent/core": [
+                "./packages/core/src"
+            ],
+            "@mcp-intent/templates": [
+                "./packages/templates/src"
+            ]
+        },
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "checkJs": false,
+        "outDir": "./dist",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "composite": true,
+        "incremental": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "packages/*/src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/node_modules",
+        "**/dist"
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "name": "mcp-intent-scaffold",
+    "version": "0.1.0",
+    "description": "Generate production-ready MCP servers with intent-driven tool design",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "npm run build --workspaces",
+        "dev": "npm run dev --workspace=@mcp-intent/cli",
+        "lint": "npm run lint --workspaces",
+        "test": "npm run test --workspaces",
+        "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules"
+    },
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "cli",
+        "openapi",
+        "code-generation"
+    ],
+    "author": "",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "typescript": "^5.3.3"
+    }
+}
