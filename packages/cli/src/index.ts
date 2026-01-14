@@ -70,11 +70,221 @@ program
 
 program
     .command('add <type> <name>')
-    .description('Add a new component (tool, resource, prompt, auth-provider)')
-    .option('-i, --interactive', 'Interactive mode')
-    .action((type, name, _options) => {
-        console.log(chalk.blue(`➕ Adding ${type}: ${name}`));
-        console.log(chalk.yellow('⚠️  Implementation coming soon...'));
+    .description('Add a new component (tool, resource, prompt)')
+    .option('-i, --interactive', 'Interactive mode with prompts')
+    .option('-d, --description <text>', 'Component description')
+    .option('--no-register', 'Skip auto-registration in src/index.ts')
+    .action(async (type, name, options) => {
+        const validTypes = ['tool', 'resource', 'prompt'];
+
+        if (!validTypes.includes(type)) {
+            console.error(chalk.red(`❌ Invalid type: ${type}`));
+            console.error(chalk.gray(`   Valid types: ${validTypes.join(', ')}`));
+            process.exit(1);
+        }
+
+        // Check if we're in an MCP project
+        const projectDir = process.cwd();
+        const indexPath = `${projectDir}/src/index.ts`;
+        const fs = await import('fs/promises');
+
+        try {
+            await fs.access(indexPath);
+        } catch {
+            console.error(chalk.red('❌ Not in an MCP project directory'));
+            console.error(chalk.gray('   Run this command from your MCP project root (where src/index.ts exists)'));
+            process.exit(1);
+        }
+
+        const ora = (await import('ora')).default;
+        const inquirer = (await import('inquirer')).default;
+        const { ToolGenerator, ResourceGenerator, PromptGenerator } = await import('@mcp-intent/core');
+
+        try {
+            if (type === 'tool') {
+                let toolOptions: any = {
+                    name,
+                    description: options.description,
+                    register: options.register,
+                };
+
+                // Interactive mode for tools
+                if (options.interactive) {
+                    const answers = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'description',
+                            message: 'Tool description:',
+                            default: options.description || `${name} tool`,
+                        },
+                        {
+                            type: 'confirm',
+                            name: 'addParams',
+                            message: 'Add parameters?',
+                            default: false,
+                        },
+                    ]);
+
+                    toolOptions.description = answers.description;
+                    toolOptions.parameters = [];
+
+                    if (answers.addParams) {
+                        let addMore = true;
+                        while (addMore) {
+                            const param = await inquirer.prompt([
+                                {
+                                    type: 'input',
+                                    name: 'name',
+                                    message: 'Parameter name:',
+                                    validate: (input) => input.length > 0 || 'Name is required',
+                                },
+                                {
+                                    type: 'list',
+                                    name: 'type',
+                                    message: 'Parameter type:',
+                                    choices: ['string', 'number', 'boolean'],
+                                    default: 'string',
+                                },
+                                {
+                                    type: 'input',
+                                    name: 'description',
+                                    message: 'Parameter description (optional):',
+                                },
+                                {
+                                    type: 'confirm',
+                                    name: 'optional',
+                                    message: 'Is this parameter optional?',
+                                    default: false,
+                                },
+                            ]);
+
+                            toolOptions.parameters.push(param);
+
+                            const { continue: cont } = await inquirer.prompt([
+                                {
+                                    type: 'confirm',
+                                    name: 'continue',
+                                    message: 'Add another parameter?',
+                                    default: false,
+                                },
+                            ]);
+
+                            addMore = cont;
+                        }
+                    }
+
+                    const { register } = await inquirer.prompt([
+                        {
+                            type: 'confirm',
+                            name: 'register',
+                            message: 'Auto-register in src/index.ts?',
+                            default: true,
+                        },
+                    ]);
+
+                    toolOptions.register = register;
+                }
+
+                const spinner = ora(`Creating tool '${name}'...`).start();
+                const generator = new ToolGenerator(projectDir);
+                await generator.generate(toolOptions);
+
+                spinner.succeed(chalk.green(`✅ Tool '${name}' created successfully!`));
+                console.log(chalk.gray(`   📄 src/tools/${name}.ts`));
+                if (toolOptions.register !== false) {
+                    console.log(chalk.gray(`   ✅ Registered in src/index.ts`));
+                }
+
+            } else if (type === 'resource') {
+                let resourceOptions: any = {
+                    name,
+                    description: options.description,
+                    register: options.register,
+                };
+
+                if (options.interactive) {
+                    const answers = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'description',
+                            message: 'Resource description:',
+                            default: options.description || `${name} resource`,
+                        },
+                        {
+                            type: 'input',
+                            name: 'uri',
+                            message: 'Resource URI:',
+                            default: `resource:///${name}`,
+                        },
+                        {
+                            type: 'list',
+                            name: 'mimeType',
+                            message: 'MIME type:',
+                            choices: ['text/plain', 'application/json', 'text/html', 'text/markdown'],
+                            default: 'text/plain',
+                        },
+                        {
+                            type: 'confirm',
+                            name: 'register',
+                            message: 'Auto-register in src/index.ts?',
+                            default: true,
+                        },
+                    ]);
+
+                    resourceOptions = { ...resourceOptions, ...answers };
+                }
+
+                const spinner = ora(`Creating resource '${name}'...`).start();
+                const generator = new ResourceGenerator(projectDir);
+                await generator.generate(resourceOptions);
+
+                spinner.succeed(chalk.green(`✅ Resource '${name}' created successfully!`));
+                console.log(chalk.gray(`   📄 src/resources/${name}.ts`));
+                if (resourceOptions.register !== false) {
+                    console.log(chalk.gray(`   ✅ Registered in src/index.ts`));
+                }
+
+            } else if (type === 'prompt') {
+                let promptOptions: any = {
+                    name,
+                    description: options.description,
+                    register: options.register,
+                };
+
+                if (options.interactive) {
+                    const answers = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'description',
+                            message: 'Prompt description:',
+                            default: options.description || `${name} prompt`,
+                        },
+                        {
+                            type: 'confirm',
+                            name: 'register',
+                            message: 'Auto-register in src/index.ts?',
+                            default: true,
+                        },
+                    ]);
+
+                    promptOptions = { ...promptOptions, ...answers };
+                }
+
+                const spinner = ora(`Creating prompt '${name}'...`).start();
+                const generator = new PromptGenerator(projectDir);
+                await generator.generate(promptOptions);
+
+                spinner.succeed(chalk.green(`✅ Prompt '${name}' created successfully!`));
+                console.log(chalk.gray(`   📄 src/prompts/${name}.ts`));
+                if (promptOptions.register !== false) {
+                    console.log(chalk.gray(`   ✅ Registered in src/index.ts`));
+                }
+            }
+
+        } catch (error: any) {
+            console.error(chalk.red(`❌ Failed to create ${type}: ${error.message}`));
+            process.exit(1);
+        }
     });
 
 program.parse();
