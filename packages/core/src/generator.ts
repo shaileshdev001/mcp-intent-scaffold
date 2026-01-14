@@ -28,6 +28,11 @@ export class ProjectGenerator {
         // Create directory structure FIRST
         await this.createDirectoryStructure();
 
+        // Generate auth files if needed
+        if (this.options.authType !== 'none') {
+            await this.generateAuthFiles();
+        }
+
         // Generate files
         await this.generatePackageJson();
         await this.generateTsConfig();
@@ -63,11 +68,7 @@ export class ProjectGenerator {
     }
 
     private async createDirectoryStructure(): Promise<void> {
-        const dirs = ['src/tools', 'src/resources', 'src/prompts'];
-
-        if (this.options.authType !== 'none') {
-            dirs.push('src/auth');
-        }
+        const dirs = ['src/tools', 'src/resources', 'src/prompts', 'src/auth'];
 
         for (const dir of dirs) {
             await fse.ensureDir(path.join(this.projectDir, dir));
@@ -197,62 +198,72 @@ Thumbs.db
         await fs.writeFile(path.join(this.projectDir, '.env.example'), envContent, 'utf-8');
     }
 
+    private async generateAuthFiles(): Promise<void> {
+        if (this.options.authType === 'api-key') {
+            const authCode = `import type { IncomingMessage } from 'http';
+
+/**
+ * API Key Authentication Middleware
+ * 
+ * This function validates API keys from the x-api-key header.
+ * The API key should be set in your .env file as API_KEY.
+ */
+export async function apiKeyAuth(request: IncomingMessage) {
+  const apiKey = request.headers['x-api-key'];
+  
+  if (!apiKey || apiKey !== process.env.API_KEY) {
+    throw new Response(null, {
+      status: 401,
+      statusText: 'Unauthorized - Invalid API Key',
+    });
+  }
+  
+  // Return authentication context
+  // This will be available in tools as context.session
+  return {
+    authenticated: true,
+    apiKey: apiKey,
+  };
+}
+`;
+
+            await fs.writeFile(
+                path.join(this.projectDir, 'src/auth/api-key.ts'),
+                authCode,
+                'utf-8'
+            );
+        }
+    }
+
     private async generateServerEntryPoint(): Promise<void> {
         const data = this.getTemplateData();
 
         let serverCode = '';
 
-        // Add authentication implementation if needed
+        // Import statements
+        serverCode += `import { FastMCP } from 'fastmcp';\nimport { z } from 'zod';\n`;
+
+        // Add auth import if needed
         if (data.authApiKey) {
-            serverCode += `import { FastMCP } from 'fastmcp';
-import { z } from 'zod';
+            serverCode += `import { apiKeyAuth } from './auth/api-key.js';\n`;
+        }
 
-const server = new FastMCP({
-  name: '${data.serverName}',
-  version: '1.0.0',
-  authenticate: async (request) => {
-    const apiKey = request.headers['x-api-key'];
-    
-    if (!apiKey || apiKey !== process.env.API_KEY) {
-      throw new Response(null, {
-        status: 401,
-        statusText: 'Unauthorized - Invalid API Key',
-      });
-    }
-    
-    return { authenticated: true, apiKey };
-  },
-});
-`;
+        serverCode += `\n`;
+
+        // Create server with or without auth
+        if (data.authApiKey) {
+            serverCode += `const server = new FastMCP({\n  name: '${data.serverName}',\n  version: '1.0.0',\n  authenticate: apiKeyAuth,\n});\n`;
         } else {
-            serverCode += `import { FastMCP } from 'fastmcp';
-import { z } from 'zod';
-
-const server = new FastMCP({
-  name: '${data.serverName}',
-  version: '1.0.0',
-});
-`;
+            serverCode += `const server = new FastMCP({\n  name: '${data.serverName}',\n  version: '1.0.0',\n});\n`;
         }
 
         // Add start configuration
-        serverCode += `
-// Start server
-`;
+        serverCode += `\n// Start server\n`;
 
         if (data.transport === 'stdio') {
             serverCode += `server.start({ transportType: 'stdio' });\n`;
         } else {
-            serverCode += `const port = parseInt(process.env.PORT || '3000');
-
-server.start({
-  transportType: 'httpStream',
-  httpStream: {
-    port: port,
-  },
-});
-
-console.log(\`🚀 MCP server running on http://localhost:\${port}/mcp\`);\n`;
+            serverCode += `const port = parseInt(process.env.PORT || '3000');\n\nserver.start({\n  transportType: 'httpStream',\n  httpStream: {\n    port: port,\n  },\n});\n\nconsole.log(\`🚀 MCP server running on http://localhost:\${port}/mcp\`);\n`;
         }
 
         await fs.writeFile(

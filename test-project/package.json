@@ -1,7 +1,7 @@
 {
-  "name": "test-fastmcp-server",
+  "name": "test-project",
   "version": "1.0.0",
-  "description": "MCP server: Test Fastmcp Server",
+  "description": "MCP server: Test Project",
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {

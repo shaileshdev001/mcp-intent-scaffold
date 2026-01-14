@@ -1,4 +1,4 @@
-# Test Fastmcp Server
+# Test Project
 
 MCP server built with [FastMCP](https://github.com/punkpeye/fastmcp)
 
@@ -50,9 +50,9 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
-    "test-fastmcp-server": {
+    "test-project": {
       "command": "node",
-      "args": ["/Users/shailesh/Documents/mcp-intent-scaffold/test-fastmcp-server/dist/index.js"],
+      "args": ["/Users/shailesh/Documents/mcp-intent-scaffold/test-project/dist/index.js"],
       "env": {
         "API_KEY": "your-api-key-here"
       }
@@ -65,7 +65,7 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
 ## Project Structure
 
 ```
-test-fastmcp-server/
+test-project/
 ├── src/
 │   ├── index.ts          # Server entry point
 │   ├── tools/            # MCP tools
