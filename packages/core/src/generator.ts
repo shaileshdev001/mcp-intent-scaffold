@@ -1,7 +1,7 @@
 export interface GeneratorOptions {
     projectName: string;
     authType: 'none' | 'api-key';
-    transport: 'stdio' | 'http' | 'both';
+    transport: 'stdio' | 'http';
     includeExamples: boolean;
 }
 

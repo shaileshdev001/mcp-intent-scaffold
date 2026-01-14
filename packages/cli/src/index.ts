@@ -14,7 +14,7 @@ program
     .command('init <project-name>')
     .description('Initialize a new MCP server project (greenfield mode by default)')
     .option('--auth <type>', 'Authentication type: none, api-key (default: none)', 'none')
-    .option('--transport <type>', 'Transport type: stdio, http, both (default: stdio)', 'stdio')
+    .option('--transport <type>', 'Transport type: stdio, http (default: stdio)', 'stdio')
     .option('--with-examples', 'Include example tools (default: false)', false)
     .action((projectName, options) => {
         // Validate auth type
@@ -26,7 +26,7 @@ program
         }
 
         // Validate transport type
-        const validTransports = ['stdio', 'http', 'both'];
+        const validTransports = ['stdio', 'http'];
         if (!validTransports.includes(options.transport)) {
             console.error(chalk.red(`❌ Invalid transport type: ${options.transport}`));
             console.error(chalk.gray(`   Valid options: ${validTransports.join(', ')}`));
