@@ -17,10 +17,29 @@ program
     .option('--transport <type>', 'Transport type: stdio, http, both (default: stdio)', 'stdio')
     .option('--with-examples', 'Include example tools (default: false)', false)
     .action((projectName, options) => {
+        // Validate auth type
+        const validAuthTypes = ['none', 'api-key'];
+        if (!validAuthTypes.includes(options.auth)) {
+            console.error(chalk.red(`❌ Invalid auth type: ${options.auth}`));
+            console.error(chalk.gray(`   Valid options: ${validAuthTypes.join(', ')}`));
+            process.exit(1);
+        }
+
+        // Validate transport type
+        const validTransports = ['stdio', 'http', 'both'];
+        if (!validTransports.includes(options.transport)) {
+            console.error(chalk.red(`❌ Invalid transport type: ${options.transport}`));
+            console.error(chalk.gray(`   Valid options: ${validTransports.join(', ')}`));
+            process.exit(1);
+        }
+
         console.log(chalk.blue(`🚀 Creating MCP server: ${projectName}`));
         console.log(chalk.gray(`   Auth: ${options.auth}`));
         console.log(chalk.gray(`   Transport: ${options.transport}`));
-        console.log(chalk.yellow('\\n⚠️  Implementation coming soon...'));
+        if (options.withExamples) {
+            console.log(chalk.gray('   Examples: included'));
+        }
+        console.log(chalk.yellow('\n⚠️  Implementation coming soon...'));
     });
 
 program
