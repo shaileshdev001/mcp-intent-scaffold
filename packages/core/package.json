@@ -10,10 +10,12 @@
         "lint": "tsc --noEmit"
     },
     "dependencies": {
+        "fs-extra": "^11.3.3",
         "handlebars": "^4.7.8",
         "zod": "^3.22.0"
     },
     "devDependencies": {
+        "@types/fs-extra": "^11.0.4",
         "@types/handlebars": "^4.1.0",
         "typescript": "^5.3.3"
     },

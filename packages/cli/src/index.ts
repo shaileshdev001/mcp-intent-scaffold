@@ -16,7 +16,7 @@ program
     .option('--auth <type>', 'Authentication type: none, api-key (default: none)', 'none')
     .option('--transport <type>', 'Transport type: stdio, http (default: stdio)', 'stdio')
     .option('--with-examples', 'Include example tools (default: false)', false)
-    .action((projectName, options) => {
+    .action(async (projectName, options) => {
         // Validate auth type
         const validAuthTypes = ['none', 'api-key'];
         if (!validAuthTypes.includes(options.auth)) {
@@ -33,13 +33,39 @@ program
             process.exit(1);
         }
 
-        console.log(chalk.blue(`🚀 Creating MCP server: ${projectName}`));
-        console.log(chalk.gray(`   Auth: ${options.auth}`));
-        console.log(chalk.gray(`   Transport: ${options.transport}`));
-        if (options.withExamples) {
-            console.log(chalk.gray('   Examples: included'));
+        // Import ora dynamically
+        const ora = (await import('ora')).default;
+        const { ProjectGenerator } = await import('@mcp-intent/core');
+
+        const spinner = ora('Creating MCP server...').start();
+
+        try {
+            const generator = new ProjectGenerator({
+                projectName,
+                authType: options.auth,
+                transport: options.transport,
+                includeExamples: options.withExamples,
+            });
+
+            await generator.generate();
+
+            spinner.succeed(chalk.green('✅ Project created successfully!'));
+
+            console.log(chalk.blue('\n📦 Next steps:'));
+            console.log(chalk.gray(`  cd ${projectName}`));
+            console.log(chalk.gray('  npm install'));
+            console.log(chalk.gray('  npm run dev'));
+
+            if (options.auth === 'api-key') {
+                console.log(chalk.yellow('\n🔑 Don\'t forget to:'));
+                console.log(chalk.gray('  cp .env.example .env'));
+                console.log(chalk.gray('  # Then edit .env and set your API_KEY'));
+            }
+        } catch (error: any) {
+            spinner.fail(chalk.red('❌ Failed to create project'));
+            console.error(chalk.red(error.message));
+            process.exit(1);
         }
-        console.log(chalk.yellow('\n⚠️  Implementation coming soon...'));
     });
 
 program
