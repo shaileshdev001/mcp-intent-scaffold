@@ -304,19 +304,20 @@ Thumbs.db
         code += ` * \n`;
         code += ` * OpenAPI: ${endpoint.method} ${endpoint.path}\n`;
         code += ` */\n`;
+
+        // Generate parameters schema first (need it for type inference)
+        const parametersSchema = intent.parameters.length > 0
+            ? this.generateParametersSchema(intent.parameters)
+            : 'z.object({})';
+
+        code += `const ${this.toCamelCase(intent.name)}Schema = ${parametersSchema};\n\n`;
         code += `export const ${this.toCamelCase(intent.name)}Tool = {\n`;
         code += `  name: '${intent.name}',\n`;
         code += `  description: '${intent.description}',\n`;
+        code += `  parameters: ${this.toCamelCase(intent.name)}Schema,\n`;
 
-        // Generate parameters schema
-        if (intent.parameters.length > 0) {
-            code += `  parameters: ${this.generateParametersSchema(intent.parameters)},\n`;
-        } else {
-            code += `  parameters: z.object({}),\n`;
-        }
-
-        // Generate execute function
-        code += `  execute: async (args: ${this.generateArgsType(intent.parameters)}) => {\n`;
+        // Generate execute function using Zod inference
+        code += `  execute: async (args: z.infer<typeof ${this.toCamelCase(intent.name)}Schema>) => {\n`;
         code += `    try {\n`;
         code += this.generateApiCall(endpoint, intent);
         code += `      return JSON.stringify(response.data, null, 2);\n`;
@@ -358,19 +359,6 @@ Thumbs.db
         return `z.object({\n    ${props.join(',\n    ')}\n  })`;
     }
 
-    private generateArgsType(parameters: any[]): string {
-        if (parameters.length === 0) {
-            return 'Record<string, never>';
-        }
-
-        const props = parameters.map(p => {
-            const optional = !p.required ? '?' : '';
-            const type = this.schemaMapper.toTypeScriptType(p.schema);
-            return `${p.name}${optional}: ${type}`;
-        });
-
-        return `{\n    ${props.join(';\n    ')};\n  }`;
-    }
 
     private generateApiCall(endpoint: Endpoint, intent: ToolIntent): string {
         const method = endpoint.method.toLowerCase();
