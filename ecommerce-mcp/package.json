@@ -1,7 +1,7 @@
 {
-  "name": "test-project",
+  "name": "ecommerce-mcp",
   "version": "1.0.0",
-  "description": "MCP server: Test Project",
+  "description": "This is an e-commerce API spec for a storefront. \nIt includes authentication, product browsing, cart, and checkout operations.\nAuth is token-based. Explore, test, and mock this API freely.\n",
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "fastmcp": "^1.27.4",
-    "zod": "^3.24.3"
+    "zod": "^3.24.3",
+    "axios": "^1.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

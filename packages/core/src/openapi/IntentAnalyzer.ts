@@ -43,14 +43,30 @@ export class IntentAnalyzer {
 
         // Generate from method and path
         const method = endpoint.method.toLowerCase();
+
+        // Check if this is a single-item GET (has path parameter)
+        const hasPathParam = endpoint.path.includes('{');
+
+        // Extract meaningful path parts (excluding parameters)
         const pathParts = endpoint.path
             .split('/')
             .filter(p => p && !p.startsWith('{'))
             .join('-');
 
-        // Smart naming based on method
+        // Smart naming based on method and path structure
+        if (method === 'get') {
+            // GET /products → list-products
+            // GET /products/{id} → get-product (singular!)
+            if (hasPathParam) {
+                // Remove plural 's' for single item endpoints
+                const singular = pathParts.endsWith('s') ? pathParts.slice(0, -1) : pathParts;
+                return `get-${singular}`;
+            } else {
+                return `list-${pathParts}`;
+            }
+        }
+
         const actionMap: Record<string, string> = {
-            get: pathParts.includes('-') ? 'get' : 'list',
             post: 'create',
             put: 'update',
             patch: 'update',

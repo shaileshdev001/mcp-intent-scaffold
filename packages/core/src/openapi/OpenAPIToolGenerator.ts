@@ -313,7 +313,7 @@ Thumbs.db
         code += `const ${this.toCamelCase(intent.name)}Schema = ${parametersSchema};\n\n`;
         code += `export const ${this.toCamelCase(intent.name)}Tool = {\n`;
         code += `  name: '${intent.name}',\n`;
-        code += `  description: '${intent.description}',\n`;
+        code += `  description: '${this.escapeString(intent.description)}',\n`;
         code += `  parameters: ${this.toCamelCase(intent.name)}Schema,\n`;
 
         // Generate execute function using Zod inference
@@ -512,5 +512,9 @@ Add to your \`claude_desktop_config.json\`:
 
     private toCamelCase(str: string): string {
         return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+    }
+
+    private escapeString(str: string): string {
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
     }
 }
