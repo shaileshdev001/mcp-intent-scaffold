@@ -287,4 +287,56 @@ program
         }
     });
 
+program
+    .command('generate <spec>')
+    .description('Generate MCP server from OpenAPI specification')
+    .option('--name <name>', 'Project name (default: from spec title)')
+    .option('--output <dir>', 'Output directory (default: current directory)')
+    .option('--base-url <url>', 'Override API base URL')
+    .option('--auth <type>', 'Authentication type: none, api-key, bearer', 'none')
+    .option('--filter <pattern>', 'Filter endpoints by tag or path pattern')
+    .option('--max-tools <number>', 'Limit number of tools (default: 30)', '30')
+    .action(async (spec, options) => {
+        const ora = (await import('ora')).default;
+        const { OpenAPIToolGenerator } = await import('@mcp-intent/core');
+
+        const spinner = ora('Analyzing OpenAPI specification...').start();
+
+        try {
+            const generator = new OpenAPIToolGenerator();
+
+            const result = await generator.generate({
+                specInput: spec,
+                projectName: options.name,
+                outputDir: options.output,
+                baseUrl: options.baseUrl,
+                authType: options.auth,
+                filter: options.filter,
+                maxTools: parseInt(options.maxTools),
+            });
+
+            spinner.succeed(chalk.green('✅ MCP server generated successfully!'));
+
+            console.log(chalk.blue('\n📊 Generation Summary:'));
+            console.log(chalk.gray(`  API: ${result.spec.info.title} v${result.spec.info.version}`));
+            console.log(chalk.gray(`  Tools generated: ${result.toolsGenerated}`));
+            console.log(chalk.gray(`  Project: ${result.projectPath}`));
+
+            console.log(chalk.blue('\n📦 Next steps:'));
+            console.log(chalk.gray(`  cd ${result.projectPath.split('/').pop()}`));
+            console.log(chalk.gray('  npm install'));
+            console.log(chalk.gray('  cp .env.example .env'));
+            console.log(chalk.gray('  # Edit .env with your API credentials'));
+            console.log(chalk.gray('  npm run dev'));
+
+        } catch (error: any) {
+            spinner.fail(chalk.red('❌ Failed to generate MCP server'));
+            console.error(chalk.red(error.message));
+            if (error.stack) {
+                console.error(chalk.gray(error.stack));
+            }
+            process.exit(1);
+        }
+    });
+
 program.parse();

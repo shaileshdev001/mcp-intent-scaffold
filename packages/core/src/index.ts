@@ -6,3 +6,4 @@ export * from './generators/PromptGenerator.js';
 export * from './openapi/OpenAPIParser.js';
 export * from './openapi/IntentAnalyzer.js';
 export * from './openapi/SchemaMapper.js';
+export * from './openapi/OpenAPIToolGenerator.js';
