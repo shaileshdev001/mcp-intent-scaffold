@@ -407,6 +407,9 @@ Thumbs.db
         code += `const server = new FastMCP({\n`;
         code += `  name: '${spec.info.title}',\n`;
         code += `  version: '${spec.info.version}',\n`;
+        code += `  experimental_capabilities: {\n`;
+        code += `    completion: false,\n`;
+        code += `  },\n`;
         code += `});\n\n`;
 
         // Register all tools
